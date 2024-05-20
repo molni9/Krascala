@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graph MST Visualizer</title>
+</head>
+<body>
+<form id="graphForm">
+    <h3>Vertices (JSON format)</h3>
+    <textarea id="vertices" placeholder='[{"id": "A", "label": "Vertex A", "color": "red", "x": 100, "y": 100}, {"id": "B", "label": "Vertex B", "color": "blue", "x": 200, "y": 100}, {"id": "C", "label": "Vertex C", "color": "green", "x": 150, "y": 200}]' rows="10" cols="50"></textarea>
+    <h3>Edges (JSON format)</h3>
+    <textarea id="edges" placeholder='[{"from": "A", "to": "B", "weight": 1}, {"from": "B", "to": "C", "weight": 2}, {"from": "C", "to": "A", "weight": 3}]' rows="10" cols="50"></textarea>
+    <button type="submit">Visualize Graph</button>
+</form>
+<svg id="graphSvg" width="800" height="600" style="border:1px solid black;"></svg>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const graphForm = document.getElementById('graphForm');
+        const graphSvg = document.getElementById('graphSvg');
+        const verticesInput = document.getElementById('vertices');
+        const edgesInput = document.getElementById('edges');
+
+        graphForm.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Get data from form
+            const verticesData = verticesInput.value.trim();
+            const edgesData = edgesInput.value.trim();
+
+            // Check for empty input
+            if (verticesData === '' || edgesData === '') {
+                alert('Please enter vertices and edges data.');
+                return;
+            }
+
+            // Parse JSON input
+            let vertices, edges;
+            try {
+                vertices = JSON.parse(verticesData);
+                edges = JSON.parse(edgesData);
+            } catch (e) {
+                alert('Invalid JSON format.');
+                return;
+            }
+
+            // Log parsed data
+            console.log('Parsed Vertices:', vertices);
+            console.log('Parsed Edges:', edges);
+
+            // Create graph input object
+            const graphInput = {
+                nodes: vertices.map(vertex => ({
+                    id: vertex.id,
+                    x: vertex.x,
+                    y: vertex.y,
+                    edges: edges.filter(edge => edge.from === vertex.id).map(edge => ({
+                        from: edge.from,
+                        to: edge.to,
+                        weight: edge.weight
+                    }))
+                }))
+            };
+
+            // Log graph input
+            console.log('Graph Input:', graphInput);
+
+            // Send request to server
+            fetch('http://localhost:8080/api/mst', { // Ensure this URL is correct
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(graphInput)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Log response data
+                    console.log('Response Data:', data);
+
+                    // Display SVG
+                    graphSvg.innerHTML = data.svg;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    });
+</script>
+</body>
+</html>
