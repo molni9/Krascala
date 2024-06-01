@@ -1,14 +1,16 @@
 package com.example.krascala.algorithm;
 
-
 import com.example.krascala.model.Edge;
 import com.example.krascala.model.Graph;
 import com.example.krascala.model.Vertex;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+// Основной класс алгоритма Краскала для поиска минимального остовного дерева (MST)
 public class KruskalAlgorithm<T> {
 
     public List<Edge<T>> findMST(Graph<T> graph) {
@@ -31,20 +33,23 @@ public class KruskalAlgorithm<T> {
     }
 
     private static class DisjointSet<T> {
-        private final List<T> parents;
-        private final List<Integer> rank;
+        private final Map<T, T> parents;
+        private final Map<T, Integer> rank;
 
         public DisjointSet(List<T> elements) {
-            parents = new ArrayList<>(elements);
-            rank = new ArrayList<>(Collections.nCopies(elements.size(), 0));
+            parents = new HashMap<>();
+            rank = new HashMap<>();
+            for (T element : elements) {
+                parents.put(element, element);
+                rank.put(element, 0);
+            }
         }
 
         public T find(T item) {
-            int index = parents.indexOf(item);
-            if (parents.get(index) != item) {
-                parents.set(index, find(parents.get(index)));
+            if (parents.get(item) != item) {
+                parents.put(item, find(parents.get(item)));
             }
-            return parents.get(index);
+            return parents.get(item);
         }
 
         public void union(T u, T v) {
@@ -53,16 +58,16 @@ public class KruskalAlgorithm<T> {
 
             if (rootU == rootV) return;
 
-            int indexU = parents.indexOf(rootU);
-            int indexV = parents.indexOf(rootV);
+            int rankU = rank.get(rootU);
+            int rankV = rank.get(rootV);
 
-            if (rank.get(indexU) > rank.get(indexV)) {
-                parents.set(indexV, rootU);
-            } else if (rank.get(indexU) < rank.get(indexV)) {
-                parents.set(indexU, rootV);
+            if (rankU > rankV) {
+                parents.put(rootV, rootU);
+            } else if (rankU < rankV) {
+                parents.put(rootU, rootV);
             } else {
-                parents.set(indexV, rootU);
-                rank.set(indexU, rank.get(indexU) + 1);
+                parents.put(rootV, rootU);
+                rank.put(rootU, rankU + 1);
             }
         }
     }
